@@ -12,16 +12,6 @@ services:
       - POSTGRES_PASSWORD=kong
     volumes:
       - "db-data-kong-postgres:/var/lib/postgresql/data"
-    # network_mode: host
-
-  client:
-    image: nginx
-    ports:
-      - 8088:80
-    links:
-      - kong:kong
-    volumes:
-      - ./src:/usr/share/nginx/html
 
   kong-migrations:
     image: kong
@@ -32,7 +22,6 @@ services:
       - KONG_CASSANDRA_CONTACT_POINTS=kong-database
     command: kong migrations bootstrap
     restart: on-failure
-    # network_mode: host
     depends_on:
       - kong-database
 
@@ -58,7 +47,6 @@ services:
       - 8443:8443
       - 8001:8001
       - 8444:8444
-    # network_mode: host
     links:
       - kong-database:kong-database
     depends_on:
@@ -68,12 +56,22 @@ services:
     image: pantsel/konga
     ports:
       - 1337:1337
-    # network_mode: host
     links:
       - kong:kong
     container_name: konga
     environment:
       - NODE_ENV=production
+
+  meuapp:
+    image: node:18-alpine
+    container_name: meuapp
+    command: sh -c "cd src && npm install && npm run start"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/src
+    networks:
+      - default
 
 volumes:
   db-data-kong-postgres:
